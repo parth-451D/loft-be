@@ -8,8 +8,8 @@ const fileUpload = require("../libs/fileUpload");
 router.post("/flat", async (req, res) => {
   try {
     const [duplicate, colum] = await pool.query(
-      "SELECT * From flats where floorId = ? and flatNo = ?",
-      [req.body.floorId, req.body.flatNo]
+      "SELECT * From flats where unitNo = ?",
+      [req.body.unitNo]
     );
     if (duplicate.length > 0) {
       res.status(400).json({ message: "Flat already exists" });
@@ -21,11 +21,11 @@ router.post("/flat", async (req, res) => {
         const images = JSON.stringify(flatImages);
         console.log(typeof flatImages);
         const [rows, fields] = await pool.query(
-          "INSERT INTO flats (floorId, flatNo, type, cleaningFees, startDate, endDate, description, images, price, bathrooms) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO flats (floorId, unitNo, unitType, cleaningFees, startDate, endDate, description, images, price, bathrooms, beds, guests) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
           [
             req.body.floorId,
-            req.body.flatNo,
-            req.body.type,
+            req.body.unitNo,
+            req.body.unitType,
             req.body.cleaningFees,
             req.body.startDate,
             req.body.endDate,
@@ -33,11 +33,11 @@ router.post("/flat", async (req, res) => {
             images,
             req.body.price,
             req.body.bathrooms,
+            req.body.beds,
+            req.body.guests,
           ]
         );
-        res
-          .status(201)
-          .json({ message: "Flat Added successfully", id: rows.insertId });
+        res.status(201).json({ message: "Flat Added successfully" });
       } catch (error) {
         res.status(400).json({ message: error.message });
       }
@@ -47,12 +47,12 @@ router.post("/flat", async (req, res) => {
   }
 });
 
-// Get a single floor flat by ID
-router.get("/flat/:id", async (req, res) => {
+// Get a single flat by ID
+router.get("/flat/:unitNo", async (req, res) => {
   try {
     const [rows, fields] = await pool.query(
-      "SELECT * FROM flats WHERE floorId =? and is_delete = 0",
-      [req.params.id]
+      "SELECT flats.*, unit_types.* FROM flats LEFT JOIN unit_types ON flats.unitType = unit_types.id WHERE flats.unitNo = ? AND flats.is_delete = 0;",
+      [req.params.unitNo]
     );
     if (rows.length > 0) {
       res
@@ -70,7 +70,7 @@ router.get("/flat/:id", async (req, res) => {
 router.get("/flat", async (req, res) => {
   try {
     const [rows, fields] = await pool.query(
-      "SELECT * FROM flats WHERE is_delete = 0"
+      "SELECT flats.*, unit_types.* FROM flats LEFT JOIN unit_types ON flats.unitType = unit_types.id WHERE flats.is_delete = 0;"
     );
     if (rows.length === 0) {
       return res.status(404).json({ message: "Property not found" });
@@ -81,50 +81,57 @@ router.get("/flat", async (req, res) => {
   }
 });
 
-// Update a property
-// router.patch("/property/:id", async (req, res) => {
-//   try {
-//     const [rows, fields] = await pool.query(
-//       "SELECT * FROM property WHERE id = ?",
-//       [req.params.id]
-//     );
-//     if (rows.length === 0) {
-//       return res.status(404).json({ message: "Property not found" });
-//     }
-//     const updatedProperty = { ...rows[0], ...req.body };
-//     const buffer = Buffer.from(req.body.image, "base64");
-//     await pool.query(
-//       "UPDATE property SET image = ?,title = ?, price = ?, description = ?, square_foot = ?, room_capacity = ?, num_washroom = ? where id = ?",
-//       [
-//         buffer,
-//         updatedProperty.title,
-//         updatedProperty.price,
-//         updatedProperty.description,
-//         updatedProperty.square_foot,
-//         updatedProperty.room_capacity,
-//         updatedProperty.num_washroom,
-//         req.params.id,
-//       ]
-//     );
-//     res.status(200).json(updatedProperty);
-//   } catch (err) {
-//     res.status(400).json({ message: err.message });
-//   }
-// });
-
-// Delete a flat
-
-router.delete("/flat/:id", async (req, res) => {
+// Update a flat
+router.patch("/flat/:unitNo", async (req, res) => {
   try {
     const [rows, fields] = await pool.query(
-      "SELECT * FROM flats WHERE id = ?",
-      [req.params.id]
+      "SELECT * FROM flats WHERE unitNo = ?",
+      [req.params.unitNo]
     );
     if (rows.length === 0) {
       return res.status(404).json({ message: "Flat not found" });
     }
-    await pool.query("UPDATE flats SET is_delete = 1 WHERE id = ?", [
-      req.params.id,
+    const updatedProperty = { ...rows[0], ...req.body };
+    let flatImages = req.body.images.map((ele) => Buffer.from(ele, "base64"));
+    const images = JSON.stringify(flatImages);
+    // const buffer = Buffer.from(req.body.image, "base64");
+    await pool.query(
+      "UPDATE flats SET (floorId, unitNo, unitType, cleaningFees, startDate, endDate, description, images, price, bathrooms, beds, guests) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        req.body.floorId,
+        req.body.unitNo,
+        req.body.unitType,
+        req.body.cleaningFees,
+        req.body.startDate,
+        req.body.endDate,
+        req.body.description,
+        images,
+        req.body.price,
+        req.body.bathrooms,
+        req.body.beds,
+        req.body.guests,
+      ]
+    );
+    res.status(200).json(updatedProperty);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Delete a flat
+
+// delete flat
+router.delete("/flat/:unitNo", async (req, res) => {
+  try {
+    const [rows, fields] = await pool.query(
+      "SELECT * FROM flats WHERE unitNo = ?",
+      [req.params.unitNo]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Flat not found" });
+    }
+    await pool.query("UPDATE flats SET is_delete = 1 WHERE unitNo = ?", [
+      req.params.unitNo,
     ]);
     res.status(200).send({ message: "Flat deleted successfully" });
   } catch (err) {
