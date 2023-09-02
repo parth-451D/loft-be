@@ -73,7 +73,7 @@ router.get("/flat", async (req, res) => {
       "SELECT flats.*, unit_types.* FROM flats LEFT JOIN unit_types ON flats.unitType = unit_types.id WHERE flats.is_delete = 0;"
     );
     if (rows.length === 0) {
-      return res.status(404).json({ message: "Property not found" });
+      return res.status(404).json({ message: "Flats not found" });
     }
     res.status(200).json(rows);
   } catch (err) {
@@ -117,8 +117,6 @@ router.patch("/flat/:unitNo", async (req, res) => {
     res.status(400).json({ message: err.message });
   }
 });
-
-// Delete a flat
 
 // delete flat
 router.delete("/flat/:unitNo", async (req, res) => {
