@@ -48,11 +48,11 @@ router.post("/flat", async (req, res) => {
 });
 
 // Get a single flat by ID
-router.get("/flat/:unitNo", async (req, res) => {
+router.get("/flat/:id", async (req, res) => {
   try {
     const [rows, fields] = await pool.query(
-      "SELECT flats.*, unit_types.* FROM flats LEFT JOIN unit_types ON flats.unitType = unit_types.id WHERE flats.unitNo = ? AND flats.is_delete = 0;",
-      [req.params.unitNo]
+      "SELECT flats.*, unit_types.* FROM flats LEFT JOIN unit_types ON flats.unitType = unit_types.id WHERE flats.id = ? AND flats.is_delete = 0;",
+      [req.params.id]
     );
     if (rows.length > 0) {
       res
@@ -82,11 +82,11 @@ router.get("/flat", async (req, res) => {
 });
 
 // Update a flat
-router.patch("/flat/:unitNo", async (req, res) => {
+router.patch("/flat/:id", async (req, res) => {
   try {
     const [rows, fields] = await pool.query(
-      "SELECT * FROM flats WHERE unitNo = ?",
-      [req.params.unitNo]
+      "SELECT * FROM flats WHERE id = ?",
+      [req.params.id]
     );
     if (rows.length === 0) {
       return res.status(404).json({ message: "Flat not found" });
@@ -94,9 +94,8 @@ router.patch("/flat/:unitNo", async (req, res) => {
     const updatedProperty = { ...rows[0], ...req.body };
     let flatImages = req.body.images.map((ele) => Buffer.from(ele, "base64"));
     const images = JSON.stringify(flatImages);
-    // const buffer = Buffer.from(req.body.image, "base64");
     await pool.query(
-      "UPDATE flats SET (floorId, unitNo, unitType, cleaningFees, startDate, endDate, description, images, price, bathrooms, beds, guests) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      "UPDATE flats SET (floorId, unitNo, unitType, cleaningFees, startDate, endDate, description, images, price, bathrooms, beds, guests) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) where id = ?",
       [
         req.body.floorId,
         req.body.unitNo,
@@ -110,6 +109,7 @@ router.patch("/flat/:unitNo", async (req, res) => {
         req.body.bathrooms,
         req.body.beds,
         req.body.guests,
+        req.params.id
       ]
     );
     res.status(200).json(updatedProperty);
@@ -119,17 +119,17 @@ router.patch("/flat/:unitNo", async (req, res) => {
 });
 
 // delete flat
-router.delete("/flat/:unitNo", async (req, res) => {
+router.delete("/flat/:id", async (req, res) => {
   try {
     const [rows, fields] = await pool.query(
-      "SELECT * FROM flats WHERE unitNo = ?",
-      [req.params.unitNo]
+      "SELECT * FROM flats WHERE id = ?",
+      [req.params.id]
     );
     if (rows.length === 0) {
       return res.status(404).json({ message: "Flat not found" });
     }
-    await pool.query("UPDATE flats SET is_delete = 1 WHERE unitNo = ?", [
-      req.params.unitNo,
+    await pool.query("UPDATE flats SET is_delete = 1 WHERE id = ?", [
+      req.params.id,
     ]);
     res.status(200).send({ message: "Flat deleted successfully" });
   } catch (err) {
