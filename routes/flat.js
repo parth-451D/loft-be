@@ -57,7 +57,7 @@ router.get("/flat/:id", async (req, res) => {
     if (rows.length > 0) {
       res
         .status(200)
-        .json({ floorData: rows, message: "Flat fetch successfully" });
+        .json({ flatData: rows, message: "Flat fetch successfully" });
     } else {
       res.status(400).json({ message: "Flat does not exist with this ID" });
     }
@@ -95,9 +95,9 @@ router.patch("/flat/:id", async (req, res) => {
     let flatImages = req.body.images.map((ele) => Buffer.from(ele, "base64"));
     const images = JSON.stringify(flatImages);
     await pool.query(
-      "UPDATE flats SET (floorId, unitNo, unitType, cleaningFees, startDate, endDate, description, images, price, bathrooms, beds, guests) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) where id = ?",
+      "UPDATE flats SET floorId = ?,unitNo = ?,  unitType = ?,cleaningFees = ?, startDate = ?,   endDate = ?, description = ?, images = ?, price = ?,  bathrooms = ?, beds = ?, guests = ?     WHERE id = ?;",
       [
-        req.body.floorId,
+        (req.body.floorId,
         req.body.unitNo,
         req.body.unitType,
         req.body.cleaningFees,
@@ -109,10 +109,13 @@ router.patch("/flat/:id", async (req, res) => {
         req.body.bathrooms,
         req.body.beds,
         req.body.guests,
-        req.params.id
+        req.params.id),
       ]
     );
-    res.status(200).json(updatedProperty);
+    res.status(200).json({
+      message: "Flat updated successfully",
+      flatData: updatedProperty,
+    });
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
