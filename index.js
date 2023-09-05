@@ -18,6 +18,7 @@ const floorRoute = require("./routes/floors");
 const flatRoute = require("./routes/flat");
 const minimumStayRoute = require("./routes/minimumStay");
 const unitTypes = require("./routes/unitType");
+const maintenanceRoute = require("./routes/maintenance")
 app.use(bodyParser.json({ limit: "10mb" }));
 app.use(bodyParser.urlencoded({ limit: "10mb", extended: true }));
 
@@ -39,6 +40,7 @@ app.use("/api", floorRoute);
 app.use("/api", flatRoute);
 app.use("/api", minimumStayRoute);
 app.use("/api", unitTypes);
+app.use("/api", maintenanceRoute);
 
 // Start the server
 app.listen(8000, () => console.log("Server started on port 8000"));
