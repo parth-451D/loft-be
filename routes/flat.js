@@ -69,8 +69,8 @@ router.get("/flat/:id", async (req, res) => {
 // Get all flat
 router.get("/flat", async (req, res) => {
   try {
-    const [rows, fields] = await pool.query(
-      "SELECT flats.*, unit_types.* FROM flats LEFT JOIN unit_types ON flats.unitType = unit_types.id WHERE flats.is_delete = 0;"
+        const [rows, fields] = await pool.query(
+      "SELECT flats.*, unit_types.* FROM flats LEFT JOIN unit_types ON flats.unitType = unit_types.id WHERE flats.is_delete = 0 AND flats.floorId = ?;", [req.query.floor]
     );
     if (rows.length === 0) {
       return res.status(404).json({ message: "Flats not found" });
