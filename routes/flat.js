@@ -81,7 +81,6 @@ router.get("/flat", async (req, res) => {
   }
 });
 
-// Update a flat
 router.patch("/flat/:id", async (req, res) => {
   try {
     const [rows, fields] = await pool.query(
@@ -92,24 +91,24 @@ router.patch("/flat/:id", async (req, res) => {
       return res.status(404).json({ message: "Flat not found" });
     }
     const updatedProperty = { ...rows[0], ...req.body };
-    let flatImages = req.body.images.map((ele) => Buffer.from(ele, "base64"));
-    const images = JSON.stringify(flatImages);
+    // Assuming req.body.images is an array of image data
+
     await pool.query(
-      "UPDATE flats SET floorId = ?,unitNo = ?,  unitType = ?,cleaningFees = ?, startDate = ?,   endDate = ?, description = ?, images = ?, price = ?,  bathrooms = ?, beds = ?, guests = ?     WHERE id = ?;",
+      "UPDATE flats SET floorId = ?, unitNo = ?, unitType = ?, cleaningFees = ?, startDate = ?, endDate = ?, description = ?, images = ?, price = ?, bathrooms = ?, beds = ?, guests = ? WHERE id = ?",
       [
-        (req.body.floorId,
+        req.body.floorId,
         req.body.unitNo,
         req.body.unitType,
         req.body.cleaningFees,
         req.body.startDate,
         req.body.endDate,
         req.body.description,
-        images,
+        JSON.stringify(req.body.images), // Convert images to a JSON string if it's an array
         req.body.price,
         req.body.bathrooms,
         req.body.beds,
         req.body.guests,
-        req.params.id),
+        req.params.id,
       ]
     );
     res.status(200).json({
