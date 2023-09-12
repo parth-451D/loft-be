@@ -21,12 +21,12 @@ const checkForMinimunStay = async (req, res, next) => {
       //   compare with found minimum stay days
       if (numberOfDaysRequested >= rows[0].selected_days) {
         req.minimumPrice = {
-            1 : rows[0].category_1,
-            2 : rows[0].category_2,
-            3 : rows[0].category_3,
-            4 : rows[0].category_4,
-            5 : rows[0].category_5,
-        }
+          1: rows[0].category_1,
+          2: rows[0].category_2,
+          3: rows[0].category_3,
+          4: rows[0].category_4,
+          5: rows[0].category_5,
+        };
         next();
       } else {
         return res.send({
@@ -41,4 +41,29 @@ const checkForMinimunStay = async (req, res, next) => {
   }
 };
 
-module.exports = { checkForMinimunStay };
+const checkForAvailableFloor = async (req, res, next) => {
+  // const [bookedRows, bookedFields] = await pool.query(
+  //   "SELECT unitNo FROM temp_booking WHERE ? BETWEEN start_date AND end_date;",
+  //   [req.body.start_date]
+  // );
+  // const bookedFlats = bookedRows.map((ele) => {
+  //   return ele.unitNo;
+  // });
+  // const flatArray = [
+  //   [101, 102, 103, 104, 105, 106, 107, 108],
+  //   [201, 202, 203, 204, 205, 206, 207, 208],
+  //   [301, 302, 303, 304, 305, 306, 307, 308],
+  // ];
+  // const filteredFlatArray = flatArray.map((subArray) =>
+  //   subArray.filter((flat) => !bookedFlats.includes(flat))
+  // );
+
+  const [maintenanceRows, maintenanceFields] = await pool.query(
+    "SELECT flats.unitNo as unitNo from maintenance join flats on maintenance.flatId = flats.id where ? BETWEEN start_date AND end_date;",
+    [req.body.start_date]
+  );
+
+  console.log("maintenanceRows", maintenanceRows);
+};
+
+module.exports = { checkForMinimunStay, checkForAvailableFloor };
