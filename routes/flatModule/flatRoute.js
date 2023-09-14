@@ -4,6 +4,7 @@ const {
   checkForMinimunStay,
   checkForAvailableFloor,
   checkForAvailableFlats,
+  getFlatDetails,
 } = require("./flatController");
 
 router.get("/available-flats", checkForMinimunStay);
@@ -17,4 +18,8 @@ router.post(
 
 // get available flats 
 router.post("/check-available-flats", checkForMinimunStay, checkForAvailableFlats)
+
+// get flat details 
+router.post("/flat-details", checkForMinimunStay, getFlatDetails)
+
 module.exports = router;

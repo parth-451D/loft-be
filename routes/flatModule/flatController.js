@@ -35,7 +35,7 @@ const checkForMinimunStay = async (req, res, next) => {
           } days`,
         });
       }
-    }
+    } next()
   } catch (error) {
     res.status(400).json({ code: 400, message: error.message });
   }
@@ -86,21 +86,91 @@ const checkForAvailableFloor = async (req, res) => {
     floor3: finalArray[2].length > 0 ? true : false,
   };
 
-  res
-    .status(200)
-    .json({
-      code: 200,
-      message: "Floor data get successfully",
-      data: response,
-    });
+  res.status(200).json({
+    code: 200,
+    message: "Floor data get successfully",
+    data: response,
+  });
 };
 
 const checkForAvailableFlats = async (req, res) => {
-   const [bookedFlatsRows, bookedFlatsFields] = await pool.query(
-    "select * from temp_booking join flats on flats.unitNo = temp_booking.unitNo where ? between start_date and end_date and floor = ? ", [req.body.start_date, req.body.floor]
-   ) 
-   
-   console.log("bookedFlatsRows", bookedFlatsRows)
+  const [bookedFlatsRows, bookedFlatsFields] = await pool.query(
+    "select temp_booking.*,  flats.id, flats.unitNo, flats.floorId, flats.unitType, flats.cleaningFees, flats.description, flats.price, flats.bathrooms, flats.beds, flats.guests from temp_booking join flats on flats.unitNo = temp_booking.unitNo where ? between start_date and end_date and floor = ? ;",
+    [req.body.start_date, req.body.floor]
+  );
+  const [maintenanceRows, maintenanceFields] = await pool.query(
+    "select maintenance.*, flats.id, flats.unitNo, flats.floorId, flats.unitType, flats.cleaningFees, flats.description, flats.price, flats.bathrooms, flats.beds, flats.guests from maintenance join flats on flats.id = maintenance.flatId where ? between start_date and end_date and flats.floorId = ?;",
+    [req.body.start_date, req.body.floor]
+  );
+  const [criteriaRows, criteriaFields] = await pool.query(
+    "select id, unitNo, floorId, unitType, cleaningFees, description, price, bathrooms, beds, guests from flats where bathrooms >= ? and beds >= ? and floorId = ?;",
+    [req.body.bathrooms, req.body.beds, req.body.floor]
+  );
+
+  let [floorFlatsRow, floorFlatsFields] = await pool.query(
+    "select id, unitNo, floorId, unitType, cleaningFees, description, price, bathrooms, beds, guests from flats where floorId = ?;",
+    [req.body.floor]
+  );
+  const reservedUnitNos = [...maintenanceRows, ...bookedFlatsRows].map(
+    (item) => item.unitNo
+  );
+  let filteredCriteriaRows = criteriaRows.filter(
+    (item) => !reservedUnitNos.includes(item.unitNo)
+  );
+  let updatedCriteriaRows;
+  if (req.minimumPrice) {
+    updatedCriteriaRows = filteredCriteriaRows.map((item) => {
+      const unitType = item.unitType.toString();
+      if (req.minimumPrice.hasOwnProperty(unitType)) {
+        return {
+          ...item,
+          newPrice: req.minimumPrice[unitType],
+          isClickable: true,
+        };
+      }
+      return item;
+    });
+    console.log(req.minimumPrice);
+  }
+  const indexToUpdate = floorFlatsRow.findIndex(
+    (item) => item.unitNo === updatedCriteriaRows[0].unitNo
+  );
+  if (indexToUpdate !== -1) {
+    floorFlatsRow[indexToUpdate] = {
+      ...floorFlatsRow[indexToUpdate],
+      ...updatedCriteriaRows[0],
+    };
+  }
+  console.log(floorFlatsRow, "floorFlatsRow");
+  res.status(200).json({
+    code: 200,
+    message: "Floor data and price get successfully",
+    data: floorFlatsRow,
+  });
 };
 
-module.exports = { checkForMinimunStay, checkForAvailableFloor, checkForAvailableFlats };
+const getFlatDetails = async (req, res) => {
+  console.log("coming");
+  const [rows, fields] = await pool.query(
+    "select * from flats where unitNo = ?",
+    [req.body.unitNo]
+  );
+  let responseObj = {};
+  if (req.minimumPrice) {
+    responseObj = { ...rows[0], newPrice: req.minimumPrice[rows[0].unitType] };
+  } else {
+    responseObj = rows[0];
+  }
+  res.status(200).json({
+    code: 200,
+    message: "Flat Details fetched successfully",
+    data: responseObj,
+  });
+};
+
+module.exports = {
+  checkForMinimunStay,
+  checkForAvailableFloor,
+  checkForAvailableFlats,
+  getFlatDetails,
+};
