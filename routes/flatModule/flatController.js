@@ -26,8 +26,10 @@ const checkForMinimunStay = async (req, res, next) => {
           4: rows[0].category_4,
           5: rows[0].category_5,
         };
-        next();
+        console.log("object1");
       } else {
+        console.log("object2");
+
         return res.send({
           code: 401,
           message: `Number of days requested is less then minimum stay days, Kindly select more then ${
@@ -35,7 +37,9 @@ const checkForMinimunStay = async (req, res, next) => {
           } days`,
         });
       }
-    } next()
+    }
+    console.log("object3");
+    next();
   } catch (error) {
     res.status(400).json({ code: 400, message: error.message });
   }
@@ -117,7 +121,13 @@ const checkForAvailableFlats = async (req, res) => {
   let filteredCriteriaRows = criteriaRows.filter(
     (item) => !reservedUnitNos.includes(item.unitNo)
   );
-  let updatedCriteriaRows;
+
+  filteredCriteriaRows = filteredCriteriaRows.map(function (item) {
+    item.isClickable = true;
+    return item;
+  });
+
+  let updatedCriteriaRows = filteredCriteriaRows;
   if (req.minimumPrice) {
     updatedCriteriaRows = filteredCriteriaRows.map((item) => {
       const unitType = item.unitType.toString();
@@ -125,15 +135,13 @@ const checkForAvailableFlats = async (req, res) => {
         return {
           ...item,
           newPrice: req.minimumPrice[unitType],
-          isClickable: true,
         };
       }
       return item;
     });
-    console.log(req.minimumPrice);
   }
   const indexToUpdate = floorFlatsRow.findIndex(
-    (item) => item.unitNo === updatedCriteriaRows[0].unitNo
+    (item) => item.unitNo === updatedCriteriaRows[0]?.unitNo
   );
   if (indexToUpdate !== -1) {
     floorFlatsRow[indexToUpdate] = {
@@ -142,7 +150,7 @@ const checkForAvailableFlats = async (req, res) => {
     };
   }
   console.log(floorFlatsRow, "floorFlatsRow");
-  res.status(200).json({
+  return res.status(200).json({
     code: 200,
     message: "Floor data and price get successfully",
     data: floorFlatsRow,
@@ -150,7 +158,6 @@ const checkForAvailableFlats = async (req, res) => {
 };
 
 const getFlatDetails = async (req, res) => {
-  console.log("coming");
   const [rows, fields] = await pool.query(
     "select * from flats where unitNo = ?",
     [req.body.unitNo]
