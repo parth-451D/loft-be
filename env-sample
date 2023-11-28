@@ -1,0 +1,22 @@
+JWT_SECRET_KEY=sfderdgdfsgehgr
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=Niyanta@2304
+DB_DATABASE=loft
+
+CARDKNOX_API_KEY=loftdev36fbfd5925164425be062f6a89ddb26c
+CARDKNOX_API_URL=https://x1.cardknox.com/gatewayjson
+
+S3_BUCKET_ACCESS_KEY=AKIAZJZSYIKY77ZFD4XM
+S3_BUCKET_ACCESS_KEY_SECRET=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
+S3_BUCKET_REGION=us-east-1
+S3_BUCKET_NAME=lofts-media
+
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=456
+SMTP_USER_NAME=info@loftsatjc.com
+SMTP_PASSWORD="likx rfdg zgfv swab"
+mail_from=info@loftsatjc.com
+
+ADMIN_EMAIL=parth.dalsaniya2001@gmail.com
+FRONT_URL=https://dev.lofts.itmakerz.com
